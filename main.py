@@ -5,9 +5,10 @@ from keras.optimizers import Adam
 from collections import deque
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
 # ENVIRONMENT
-env = gym.make("LunarLander-v2")
+env = gym.make("LunarLander-v2", render_mode="human")
 
 # AGENT
 class DQNAgent:
@@ -36,17 +37,17 @@ class DQNAgent:
         else: 
             return np.argmax(self.model.predict(state))
     
-    def remember(self, state, action, reward, new_state):
-        self.memory.append(state, action, reward, new_state)
+    def remember(self, state, action, reward, new_state, done):
+        self.memory.append((state, action, reward, new_state, done))
 
     def replay(self):
         minibatch = random.sample(self.memory, 32)
-        for state, action, reward, new_state in minibatch:
+        for state, action, reward, new_state, done in minibatch:
             target = reward
             if not done:
                 target = reward + self.discount * np.max(self.model.predict(new_state))
             target_f = self.model.predict(state)
-            target_f[action][0] = target
+            target_f[0][action] = target
             self.model.fit(state, target_f, epochs=1)
         self.epsilon -= self.epsilon_decay
 
@@ -58,8 +59,10 @@ n_episodes = 500
 batch_size = 32
 
 # TESTING
+rewards_history = {}
 for i in range(n_episodes):
     state, info = env.reset()
+    state = np.reshape(state, [1, 8])
     env.render()
     done = False
     total_reward = 0
@@ -68,11 +71,20 @@ for i in range(n_episodes):
         env.render()
         action = agent.act(state)
         new_state, reward, done, _, _ = env.step(action)
-        agent.remember(state, action, reward, new_state)
+        new_state = np.reshape(new_state, [1, 8])
+        agent.remember(state, action, reward, new_state, done)
         state = new_state
         total_reward += reward
     
     print(f"episode: {i+1}, reward = {total_reward}, epsilon = {int(agent.epsilon)}")
+    rewards_history[i+1] = total_reward
 
     if len(agent.memory) > batch_size:
         agent.replay()
+
+# PLOTTING
+plt.plot(list(rewards_history.keys()), list(rewards_history.values()))
+plt.xlabel('Episode')
+plt.ylabel('Reward')
+plt.title('Training Rewards')
+plt.show()
