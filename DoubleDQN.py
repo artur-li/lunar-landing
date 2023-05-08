@@ -50,7 +50,7 @@ class DQNAgent:
             if not done:
                 best_action = np.argmax(self.online_q_network.predict(new_state, verbose=0))
                 target = reward + self.discount * self.target_q_network.predict(new_state, verbose=0)[0][best_action]
-            target_f = self.online_q_network.predict(state)
+            target_f = self.online_q_network.predict(state, verbose=0)
             target_f[0][action] = target
             self.online_q_network.fit(state, target_f, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
