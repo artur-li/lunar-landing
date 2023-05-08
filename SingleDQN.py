@@ -59,7 +59,7 @@ agent = DQNAgent()
 # PARAMATERS
 n_episodes = 300
 batch_size = 32
-max_steps = 2000
+max_steps = 1000
 
 # TRAINING
 rewards_history = {}
@@ -79,8 +79,7 @@ for i in range(n_episodes):
         state = new_state
         total_reward += reward
 
-    if i%50==0:
-        print(f"episode: {i+1}, reward = {total_reward}, epsilon = {int(agent.epsilon)}")
+    print(f"episode: {i+1}, reward = {total_reward}, epsilon = {int(agent.epsilon)}")
 
     rewards_history[i+1] = total_reward
 
