@@ -64,7 +64,7 @@ agent = DQNAgent()
 # PARAMATERS
 n_episodes = 300
 batch_size = 32
-max_steps = 2000
+max_steps = 1000
 update_weights_timestep_count = 0
 
 # TRAINING
@@ -85,11 +85,10 @@ for i in range(n_episodes):
         state = new_state
         total_reward += reward
         update_weights_timestep_count += 1
-        if update_weights_timestep_count % 3000 == 0:
+        if update_weights_timestep_count % 2000 == 0:
             agent.copy_weights()
 
-    if i%50==0:
-        print(f"episode: {i+1}, reward = {total_reward}, epsilon = {int(agent.epsilon)}")
+    print(f"episode: {i+1}, reward = {total_reward}, epsilon = {int(agent.epsilon)}")
 
     rewards_history[i+1] = total_reward
 
