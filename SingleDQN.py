@@ -78,6 +78,8 @@ for i in range(n_episodes):
         agent.remember(state, action, reward, new_state, done) 
         state = new_state
         total_reward += reward
+        if done:
+            break
 
     print(f"episode: {i+1}, reward = {total_reward}, epsilon = {int(agent.epsilon)}")
 
