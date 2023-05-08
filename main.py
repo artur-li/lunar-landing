@@ -47,11 +47,11 @@ class DQNAgent:
         for state, action, reward, new_state, done in minibatch:
             target = reward
             if not done:
-                target = reward + self.discount * np.max(self.model.predict(new_state))
+                target = reward + self.discount * np.max(self.model.predict(new_state, verbose=0))
             target_f = self.model.predict(state)
             target_f[0][action] = target
-            self.model.fit(state, target_f, epochs=1)
-        self.epsilon -= self.epsilon_decay
+            self.model.fit(state, target_f, epochs=1, verbose=0)
+        self.epsilon *= self.epsilon_decay
 
         
 agent = DQNAgent()
@@ -59,6 +59,8 @@ agent = DQNAgent()
 # PARAMATERS
 n_episodes = 2000
 batch_size = 64
+max_steps = 1000
+negative_reward = -100
 
 # TRAINING
 rewards_history = {}
@@ -69,16 +71,26 @@ for i in range(n_episodes):
     done = False
     total_reward = 0
     
-    while not done:
+    for step in range(max_steps):
         env.render()
         action = agent.act(state)
         new_state, reward, done, _, _ = env.step(action)
         new_state = np.reshape(new_state, [1, 8])
-        agent.remember(state, action, reward, new_state, done)
+
+        if done or step == max_steps - 1:  # Check if the episode ended or the step limit was reached
+            if not done:  # If the step limit was reached without landing
+                reward = negative_reward  # Set the reward to the negative reward value
+
+        agent.remember(state, action, reward, new_state, done)  # Save the experience in the agent's memory
         state = new_state
         total_reward += reward
+
+        if done:
+            break
     
-    print(f"episode: {i+1}, reward = {total_reward}, epsilon = {int(agent.epsilon)}")
+    if i%100==0:
+        print(f"episode: {i+1}, reward = {total_reward}, epsilon = {int(agent.epsilon)}")
+
     rewards_history[i+1] = total_reward
 
     if len(agent.memory) > batch_size:
