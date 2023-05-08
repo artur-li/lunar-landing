@@ -87,6 +87,8 @@ for i in range(n_episodes):
         update_weights_timestep_count += 1
         if update_weights_timestep_count % 2000 == 0:
             agent.copy_weights()
+        if done:
+            break
 
     print(f"episode: {i+1}, reward = {total_reward}, epsilon = {int(agent.epsilon)}")
 
