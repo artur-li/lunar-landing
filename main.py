@@ -13,20 +13,22 @@ env = gym.make("LunarLander-v2", render_mode="human")
 # AGENT
 class DQNAgent:
     def __init__(self):
-        self.model = self.build_model(learning_rate=0.001)
+        self.learning_rate = 0.001
+        self.model = self.build_model(learning_rate=self.learning_rate)
 
-        self.memory = deque(maxlen=1000)
+        self.memory_size = 10000
+        self.memory = deque(maxlen=self.memory_size)
 
         self.epsilon = 1
-        self.epsilon_decay = 0.001
+        self.epsilon_decay = 0.995
 
-        self.discount = 0.95
+        self.discount = 0.99
 
     def build_model(self, learning_rate):
         model = Sequential()
         model.add(layers.InputLayer(input_shape=8))
-        model.add(layers.Dense(64, activation='relu'))
-        model.add(layers.Dense(64, activation='relu'))
+        model.add(layers.Dense(128, activation='relu'))
+        model.add(layers.Dense(128, activation='relu'))
         model.add(layers.Dense(4, activation='linear'))
         model.compile(loss='mse', optimizer=Adam(learning_rate=learning_rate))
         return model
@@ -40,8 +42,8 @@ class DQNAgent:
     def remember(self, state, action, reward, new_state, done):
         self.memory.append((state, action, reward, new_state, done))
 
-    def replay(self):
-        minibatch = random.sample(self.memory, 32)
+    def replay(self, batch_size):
+        minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, new_state, done in minibatch:
             target = reward
             if not done:
@@ -55,10 +57,10 @@ class DQNAgent:
 agent = DQNAgent()
         
 # PARAMATERS
-n_episodes = 500
-batch_size = 32
+n_episodes = 2000
+batch_size = 64
 
-# TESTING
+# TRAINING
 rewards_history = {}
 for i in range(n_episodes):
     state, info = env.reset()
@@ -80,11 +82,32 @@ for i in range(n_episodes):
     rewards_history[i+1] = total_reward
 
     if len(agent.memory) > batch_size:
-        agent.replay()
+        agent.replay(batch_size)
 
-# PLOTTING
+# plotting
 plt.plot(list(rewards_history.keys()), list(rewards_history.values()))
 plt.xlabel('Episode')
 plt.ylabel('Reward')
-plt.title('Training Rewards')
+plt.title('Training Rewards version')
+plt.savefig('version.png')  # Save the plot as a PNG image
 plt.show()
+
+# Save the agent model and parameters
+agent.model.save('agent_model.h5')
+
+# Save the agent's hyperparameters to a JSON file
+import json
+agent_hyperparams = {
+    'learning_rate': agent.learning_rate,
+    'discount': agent.discount,
+    'epsilon_decay': agent.epsilon_decay,
+    'n_episodes': n_episodes,
+    'memory_size': agent.memory_size,
+    'batch_size': batch_size,
+    'epsilon': agent.epsilon,
+    'num of hidden layers': 2,
+    'hidden layer 1 neurons': 128,
+    'hidden layer 2 neurons': 128
+}
+with open('version.json', 'w') as outfile:
+    json.dump(agent_hyperparams, outfile)
